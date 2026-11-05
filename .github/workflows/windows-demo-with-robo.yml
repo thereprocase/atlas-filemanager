@@ -1,0 +1,56 @@
+name: Windows Full demo with RoboRightClick
+
+on:
+  push:
+    branches: [build/windows-full-demo]
+    paths:
+      - '.github/workflows/windows-demo-with-robo.yml'
+      - 'scripts/bundle-robo-demo.ps1'
+  workflow_dispatch:
+    inputs:
+      atlas_run:
+        description: Successful Windows Full demo workflow run ID
+        default: '42041493034'
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  bundle:
+    runs-on: windows-2022
+    timeout-minutes: 70
+    env:
+      ATLAS_RUN: ${{ inputs.atlas_run || '42041493034' }}
+      ROBO_COMMIT: 4ce1c1eb1ae239233ff41a15ec445257c0fb63e2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: thereprocase/robo-rightclick
+          ref: 4ce1c1eb1ae239233ff41a15ec445257c0fb63e2
+          path: companion-src
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.111'
+      - name: Test RoboRightClick Core
+        working-directory: companion-src
+        run: dotnet test tests/RoboRightClick.Core.Tests -c Release --locked-mode
+      - name: Build self-contained RoboRightClick
+        working-directory: companion-src
+        run: dotnet publish src/RoboRightClick/RoboRightClick.csproj -c Release --self-contained true -p:PublishSingleFile=true -p:EnableSingleFileAnalyzer=false -p:DebugType=none -p:ContinuousIntegrationBuild=true -o artifacts/publish
+      - name: Bundle with verified Atlas artifact
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/bundle-robo-demo.ps1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Atlas-Full-with-RoboRightClick-Windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
