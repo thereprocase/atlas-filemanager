@@ -62,7 +62,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force target/release | Out-Null
           Copy-Item target/release-perf/*.exe target/release
-          ./scripts/build-full-demo.ps1 -Version '0.1.0-dev' -ArchiveName 'Atlas-Dev-Windows-x64.zip' -RoboDirectory 'companion-src' 
+          ./scripts/build-full-demo.ps1 -Version '0.1.0-dev' -ArchiveName 'Atlas-Dev-Windows-x64.zip' -RoboDirectory 'companion-src'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: Atlas-Dev-Windows-x64
