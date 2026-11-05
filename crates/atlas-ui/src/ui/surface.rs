@@ -117,7 +117,9 @@ pub(crate) fn chrome_font_size_header(window: &Window) -> Pixels {
 
 /// UI font at a specific size (keeps family/weight from window style).
 pub(crate) fn chrome_ui_font(window: &Window) -> Font {
-    window.text_style().font()
+    let mut font = window.text_style().font();
+    if crate::ui::gridline::active() { font.family = "IBM Plex Mono".into(); }
+    font
 }
 
 fn fluent_icons_font() -> Font {
@@ -297,6 +299,7 @@ pub(crate) fn paint_rounded_corners(
     corners: Corners<Pixels>,
     color: Hsla,
 ) {
+    let corners = if crate::ui::gridline::active() { Corners::default() } else { corners };
     window.paint_quad(gpui::quad(
         bounds,
         corners,

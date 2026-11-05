@@ -37,6 +37,7 @@ pub mod edge_autoscroll;
 pub mod file_icons;
 pub(crate) mod file_filter;
 pub mod glass;
+pub(crate) mod gridline;
 pub mod icons;
 pub mod inspector;
 #[cfg(feature = "ui-lab")]

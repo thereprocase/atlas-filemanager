@@ -16,6 +16,11 @@ pub(crate) const VAULT_FOLDER_ART: &str = "illustrations/vault-folder-lock.png";
 
 pub fn bundled_fonts() -> Vec<Cow<'static, [u8]>> {
     vec![
+        Cow::Borrowed(include_bytes!("../assets/fonts/plex/IBMPlexSans-Regular.ttf")),
+        Cow::Borrowed(include_bytes!("../assets/fonts/plex/IBMPlexSans-Bold.ttf")),
+        Cow::Borrowed(include_bytes!("../assets/fonts/plex/IBMPlexMono-Regular.ttf")),
+        Cow::Borrowed(include_bytes!("../assets/fonts/plex/IBMPlexMono-SemiBold.ttf")),
+
         Cow::Borrowed(include_bytes!("../assets/fonts/geist/Geist-Variable.ttf")),
         Cow::Borrowed(include_bytes!(
             "../assets/fonts/geist/GeistMono-Variable.ttf"

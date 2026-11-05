@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "id": "windows-navigation",
+      "request": "Discover mapped drives, organization sync roots, Nextcloud, This PC and Network like Explorer.",
+      "status": "wishlist",
+      "evidence": "User screenshot; sysinfo fixed/removable-only enumeration confirmed."
+    },
+    {
+      "id": "recent-bookmark-drag",
+      "request": "Drag Recent folders into Bookmarks.",
+      "status": "wishlist",
+      "evidence": "Recent rows lack drag-source handler."
+    },
+    {
+      "id": "properties-crash",
+      "request": "Fix Properties on Desktop opened from Recent.",
+      "status": "reported",
+      "evidence": "User reproduced crash; no crash-report directory; root cause unconfirmed."
+    },
+    {
+      "id": "xlsm-preview",
+      "request": "Preview macro-enabled Excel workbook contents without executing macros.",
+      "status": "wishlist",
+      "evidence": "xlsm absent from preview allowlists."
+    },
+    {
+      "id": "pdf-runtime",
+      "request": "Resolve Document Previews missing PDF renderer / Runtime Tools error.",
+      "status": "reported",
+      "evidence": "User screenshot; separate from xlsm support."
+    },
+    {
+      "id": "unc-internal-navigation",
+      "request": "Browse UNC paths inside Atlas instead of opening Explorer.",
+      "status": "reported",
+      "evidence": "User entered a UNC path and Explorer opened; entry control unspecified."
+    }
+  ]
+}

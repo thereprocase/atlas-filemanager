@@ -149,6 +149,8 @@ impl App {
                 return;
             };
 
+        let gridline = crate::ui::gridline::is_theme(&resolved_name);
+        crate::ui::gridline::set_active(gridline);
         let wants_backdrop = resolved_name.ends_with(Self::GLASS_SUFFIX);
 
         // Enable the OS backdrop for explicit glass themes. This is Atlas'
@@ -175,7 +177,7 @@ impl App {
         }
         // Re-apply zoom so Root's per-frame set_rem_size(theme.font_size) picks up
         // the user's scale instead of the theme default (px(16.)).
-        Theme::global_mut(cx).font_size = gpui::px(16.0 * self.state.settings.global_zoom);
+        Theme::global_mut(cx).font_size = gpui::px(if gridline { 18.0 } else { 16.0 } * self.state.settings.global_zoom);
         // Always show scrollbar on hover (not only while scrolling) and boost thumb
         // opacity so it's actually visible against glass backgrounds.
         {
