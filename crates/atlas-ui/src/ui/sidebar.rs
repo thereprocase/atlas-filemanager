@@ -1889,7 +1889,7 @@ fn drop_zone_item(
                 .rounded(crate::ui::gridline::radius(6.))
                 .bg(hsla(0., 0., 0., 0.18))
                 .text_color(muted)
-                .invisible()
+                .when(!crate::ui::gridline::active(), |s| s.invisible())
                 .group_hover(group, gpui::Styled::visible)
                 .child(icon(AtlasIcon::X, 10.0, fg))
                 .on_mouse_down(MouseButton::Left, move |_ev, _window, cx| {
@@ -3329,7 +3329,7 @@ fn tag_row(
                 .justify_center()
                 .rounded(crate::ui::gridline::radius(2.0))
                 .cursor_pointer()
-                .invisible()
+                .when(!crate::ui::gridline::active(), |s| s.invisible())
                 .group_hover(group.clone(), gpui::Styled::visible)
                 .hover(|h| h.bg(hover))
                 .tooltip(|window, cx| {
@@ -3358,7 +3358,7 @@ fn tag_row(
                 .justify_center()
                 .rounded(crate::ui::gridline::radius(2.0))
                 .cursor_pointer()
-                .invisible()
+                .when(!crate::ui::gridline::active(), |s| s.invisible())
                 .group_hover(group, gpui::Styled::visible)
                 .hover(|h| h.bg(hover))
                 .tooltip(|window, cx| {
@@ -3960,7 +3960,7 @@ pub(crate) fn bookmark_row(
                 .justify_center()
                 .rounded(crate::ui::gridline::radius(2.0))
                 .cursor_pointer()
-                .invisible()
+                .when(!crate::ui::gridline::active(), |s| s.invisible())
                 .group_hover(group, gpui::Styled::visible)
                 .hover(|h| h.bg(hover))
                 .tooltip(|window, cx| {
