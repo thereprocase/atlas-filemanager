@@ -102,6 +102,10 @@ fn render(
     max_edge: Option<u32>,
     cancel: &AtomicBool,
 ) -> Result<Vec<RenderedPage>, Box<dyn std::error::Error>> {
+    render_limited(source, directory, max_edge, cancel, None)
+}
+
+fn render_limited(source: &Path, directory: &Path, max_edge: Option<u32>, cancel: &AtomicBool, page_limit: Option<u32>) -> Result<Vec<RenderedPage>, Box<dyn std::error::Error>> {
     let check = || -> Result<(), Box<dyn std::error::Error>> {
         if cancel.load(Ordering::Relaxed) {
             return Err("Cancelled".into());
@@ -117,7 +121,7 @@ fn render(
         return Err("PDF must contain 1–10000 pages".into());
     }
     let mut pages = Vec::new();
-    for index in 0..count {
+    for index in 0..page_limit.unwrap_or(count).min(count) {
         check()?;
         let page = document.GetPage(index)?;
         // PdfPage is IClosable; close even on rendering/read/write errors.
@@ -222,4 +226,49 @@ fn png_density(bytes: &mut Vec<u8>, dpi: u16) -> Result<(), Box<dyn std::error::
         offset = end;
     }
     Err("Rendered PNG has no image data".into())
+}
+
+/// A bounded first-page preview through the installed Windows PDF renderer.
+pub fn render_first_page(source: &Path, directory: &Path, edge: u32) -> Result<PathBuf, String> {
+    std::fs::create_dir_all(directory).map_err(|e| e.to_string())?;
+    render_limited(source, directory, Some(edge.min(2048).max(1)), &AtomicBool::new(false), Some(1))
+        .map_err(|e| e.to_string())?.into_iter().next().map(|p| p.path).ok_or_else(|| "PDF has no pages".into())
+}
+
+#[cfg(test)]
+mod thumbnail_tests {
+    use super::*;
+    #[test]
+    fn preview_renders_only_the_first_page_at_the_requested_size() {
+        let root = std::env::temp_dir().join(format!("atlas-pdf-thumbnail-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        struct Cleanup(PathBuf);
+        impl Drop for Cleanup { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); } }
+        let _cleanup = Cleanup(root.clone());
+        let content = "BT /F1 12 Tf 10 50 Td (Preview) Tj ET";
+        let objects = [
+            "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+            "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>".to_string(),
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << /Font << /F1 6 0 R >> >> /Contents 5 0 R >>".to_string(),
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << /Font << /F1 6 0 R >> >> /Contents 5 0 R >>".to_string(),
+            format!("<< /Length {} >>\nstream\n{content}\nendstream", content.len()),
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_string(),
+        ];
+        let mut pdf = "%PDF-1.4\n".to_string();
+        let mut offsets = Vec::new();
+        for (i, object) in objects.iter().enumerate() { offsets.push(pdf.len()); pdf.push_str(&format!("{} 0 obj\n{object}\nendobj\n", i + 1)); }
+        let xref = pdf.len();
+        pdf.push_str("xref\n0 7\n0000000000 65535 f \n");
+        for offset in offsets { pdf.push_str(&format!("{offset:010} 00000 n \n")); }
+        pdf.push_str(&format!("trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"));
+        let source = root.join("two-pages.pdf");
+        std::fs::write(&source, pdf).unwrap();
+        let output = root.join("preview");
+        let page = render_first_page(&source, &output, 64).unwrap();
+        let bytes = std::fs::read(page).unwrap();
+        assert_eq!(&bytes[..8], b"\x89PNG\r\n\x1a\n");
+        assert!(u32::from_be_bytes(bytes[16..20].try_into().unwrap()) <= 64);
+        assert!(u32::from_be_bytes(bytes[20..24].try_into().unwrap()) <= 64);
+        assert_eq!(std::fs::read_dir(output).unwrap().count(), 1);
+    }
 }

@@ -204,6 +204,10 @@ unsafe fn drain_requests(hwnd: HWND) {
 
 unsafe fn process(hwnd: HWND, req: ShellMenuRequest) {
     match req {
+        ShellMenuRequest::Properties { paths } => {
+            if paths.len() > 1 { crate::ui::shell_context_menu::show_properties_multi_on_shell_thread(&paths); }
+            else if let Some(path) = paths.first() { crate::ui::shell_context_menu::show_properties_on_shell_thread(path); }
+        }
         ShellMenuRequest::Build { id, paths } => match build_menu(hwnd, id, &paths) {
             Some((am, items)) => {
                 set_active(am);

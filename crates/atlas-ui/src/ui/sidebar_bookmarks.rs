@@ -92,6 +92,7 @@ impl RenderOnce for BookmarkCollection {
 
 #[derive(Clone)]
 pub(crate) struct BookmarkDrag {
+    pub removable: bool,
     pub path: PathBuf,
     pub profile: String,
     pub label: String,
@@ -145,7 +146,7 @@ impl App {
     }
 
     pub(crate) fn remove_bookmark_reference(&mut self, drag: &BookmarkDrag, position: gpui::Point<gpui::Pixels>) {
-        if self.state.profiles.active().name == drag.profile && self.bookmark_removal_at(position) {
+        if drag.removable && self.state.profiles.active().name == drag.profile && self.bookmark_removal_at(position) {
             let bookmarks = &mut self.state.profiles.active_mut().bookmarks;
             let before = bookmarks.len();
             bookmarks.retain(|bookmark| bookmark.path != drag.path);

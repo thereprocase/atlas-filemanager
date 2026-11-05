@@ -24,7 +24,7 @@ const CODE_EXTS: &[&str] = &[
 const ARCHIVE_EXTS: &[&str] = &["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "tgz"];
 const PRESENTATION_EXTS: &[&str] = &["ppt", "pptx", "odp", "key"];
 const DOCUMENT_EXTS: &[&str] = &["doc", "docx", "odt", "rtf"];
-const SPREADSHEET_EXTS: &[&str] = &["xls", "xlsx", "csv", "tsv", "ods"];
+const SPREADSHEET_EXTS: &[&str] = &["xls", "xlsm", "xlsx", "csv", "tsv", "ods"];
 
 #[derive(Clone, Copy)]
 pub(crate) enum AtlasIcon {

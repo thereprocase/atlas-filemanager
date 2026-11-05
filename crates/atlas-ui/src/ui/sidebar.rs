@@ -2317,6 +2317,10 @@ fn render_collapsed_sections(
                 }
             }
             SectionKind::Drives => {
+                #[cfg(windows)]
+                for (label, path) in [("This PC", atlas_core::fs::shell_locations::COMPUTER), ("Network", atlas_core::fs::shell_locations::NETWORK)] {
+                    col = col.child(collapsed_virtual_nav_row(format!("shell-{label}").into(), label.to_string(), "monitor", Location::Shell(path.into()), None, app, style, false));
+                }
                 let drives = atlas_core::fs::mounts::list_drives();
                 #[cfg(target_os = "linux")]
                 let removable = atlas_core::fs::udisks::list_removable();
@@ -3077,7 +3081,7 @@ fn render_section_body(
                 let bm_app = app.clone();
                 let hover_id = DragHoverId::Sidebar("empty-bookmarks".to_string());
                 col = col.child(
-                    div()
+                    bookmark_reference_target(div(), &bm_app)
                         .w_full()
                         .rounded(px(7.))
                         .hover(|s| s.bg(hover))
@@ -3165,6 +3169,10 @@ fn render_section_body(
             }
         }
         SectionKind::Drives => {
+            #[cfg(windows)]
+            for (label, path) in [("This PC", atlas_core::fs::shell_locations::COMPUTER), ("Network", atlas_core::fs::shell_locations::NETWORK)] {
+                col = col.child(virtual_nav_row(format!("shell-{label}").into(), label.to_string(), "monitor", Location::Shell(path.into()), None, app, style, false));
+            }
             let drives = atlas_core::fs::mounts::list_drives();
             #[cfg(target_os = "linux")]
             let removable = atlas_core::fs::udisks::list_removable();
@@ -3744,7 +3752,7 @@ fn section_header(
             let drop_app_ext = app.clone();
             let hover_id = DragHoverId::Sidebar("bookmarks-header".to_string());
             let bm_app = app.clone();
-            row.on_prepaint_child(drag_hover_recorder_with_drop(
+            bookmark_reference_target(row, &bm_app).on_prepaint_child(drag_hover_recorder_with_drop(
                 hover_id,
                 DragHoverKind::Nav,
                 DragHoverCommand::Process(Action::CloseOverlays),
@@ -3864,6 +3872,20 @@ fn empty_row(label: String, muted: Hsla) -> impl IntoElement {
     div().px_2().h(crate::ui::rem_px(24.0)).flex().text_xs().text_color(muted).child(RowInk::new(label, RowIcon::None, muted, false).into_element())
 }
 
+fn bookmark_reference_target<E: gpui::InteractiveElement>(row: E, app: &Entity<AtlasApp>) -> E {
+    let app = app.clone();
+    row.on_drag_over::<crate::ui::sidebar_bookmarks::BookmarkDrag>(|style, _, _, _| style)
+        .on_drop::<crate::ui::sidebar_bookmarks::BookmarkDrag>(move |drag, _window, cx| {
+            app.update(cx, |app, cx| {
+                if app.state.profiles.active().name == drag.profile {
+                    app.insert_bookmark_paths(vec![drag.path.clone()], app.state.profiles.active().bookmarks.len());
+                    app.mark_drag_committed();
+                    cx.notify();
+                }
+            });
+        })
+}
+
 pub(crate) fn bookmark_row(
     index: usize,
     id: SharedString,
@@ -3883,7 +3905,7 @@ pub(crate) fn bookmark_row(
         windows_theme,
         ..
     } = style;
-    let drag = crate::ui::sidebar_bookmarks::BookmarkDrag { path: path.clone(), profile, label: label.clone() };
+    let drag = crate::ui::sidebar_bookmarks::BookmarkDrag { removable: true, path: path.clone(), profile, label: label.clone() };
     let drag_app = app.clone();
     let drop_dest = path.clone();
     let external_dest = path.clone();
@@ -4043,6 +4065,9 @@ fn nav_row(
     let shell_app = app.clone();
     let ctx_app = app.clone();
     let ctx_path = path.clone();
+    let drag = path.clone();
+    let drag_label = label.clone();
+    let drag_app = app.clone();
     let content = if active { accent } else { fg };
     let icon_color = if active {
         accent
@@ -4065,6 +4090,11 @@ fn nav_row(
         .items_center()
         .rounded(px(7.))
         .cursor_pointer()
+        .on_drag(drag, move |path, _, _, cx| {
+            let profile = drag_app.read(cx).state.profiles.active().name.clone();
+            drag_app.update(cx, |app, cx| { app.begin_bookmark_drag(); cx.notify(); });
+            cx.new(|_| crate::ui::sidebar_bookmarks::BookmarkDrag { removable: false, path: path.clone(), profile, label: drag_label.clone() })
+        })
         .text_color(content)
         .when(active, |s| {
             s.bg(active_bg).font_weight(gpui::FontWeight::MEDIUM)
@@ -4429,6 +4459,8 @@ pub(crate) fn native_cloud_folders() -> Vec<(String, PathBuf)> {
 
 fn scan_native_cloud_folders() -> Vec<(String, PathBuf)> {
     let mut out = Vec::new();
+    #[cfg(windows)]
+    out.extend(atlas_win_space::shell_locations::sync_roots());
     let mut push = |label: &str, path: Option<PathBuf>| {
         let Some(path) = path else {
             return;

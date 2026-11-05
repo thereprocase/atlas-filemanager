@@ -102,3 +102,13 @@ pub fn incurs_seek_penalty(path: &Path) -> Option<bool> {
     (ok != 0 && returned as usize >= size_of::<DEVICE_SEEK_PENALTY_DESCRIPTOR>())
         .then_some(descriptor.IncursSeekPenalty != 0)
 }
+
+/// Includes drive-letter mappings visible to the current user token.
+pub fn logical_drive_roots() -> Vec<(PathBuf, bool)> {
+    let mask = unsafe { GetLogicalDrives() };
+    (0..26).filter(|bit| mask & (1 << bit) != 0).map(|bit| {
+        let root = PathBuf::from(format!("{}:\\", char::from(b'A' + bit as u8)));
+        let remote = unsafe { windows_sys::Win32::Storage::FileSystem::GetDriveTypeW(super::wide(root.as_os_str()).as_ptr()) } == 4;
+        (root, remote)
+    }).collect()
+}

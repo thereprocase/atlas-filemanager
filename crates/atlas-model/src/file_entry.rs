@@ -280,7 +280,7 @@ pub fn file_category(kind: &FileKind, ext: Option<&str>) -> &'static str {
                 }
                 "doc" | "docx" | "odt" | "rtf" | "pdf" | "txt" | "md" | "markdown" | "rst"
                 | "tex" => "file_kind_document",
-                "xls" | "xlsx" | "csv" | "tsv" | "ods" | "numbers" => {
+                "xls" | "xlsm" | "xlsx" | "csv" | "tsv" | "ods" | "numbers" => {
                     "file_kind_spreadsheet"
                 }
                 "ppt" | "pptx" | "odp" | "key" => {

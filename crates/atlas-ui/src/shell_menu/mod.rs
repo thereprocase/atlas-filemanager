@@ -79,6 +79,7 @@ pub struct NativeMenuItem {
 
 /// A request from the UI to the shell worker.
 pub enum ShellMenuRequest {
+    Properties { paths: Vec<PathBuf> },
     /// Build a context menu for `paths` (must share one parent directory).
     Build { id: u64, paths: Vec<PathBuf> },
     /// Lazily expand a submenu's children (depth ≥ 2).
@@ -180,6 +181,10 @@ impl ShellMenuHandle {
 }
 
 /// Spawn the STA worker thread and return a handle. Call once in `App::new`.
+static PROPERTIES_WORKER: std::sync::OnceLock<ShellMenuHandle> = std::sync::OnceLock::new();
+pub(crate) fn properties(paths: Vec<PathBuf>) {
+    PROPERTIES_WORKER.get_or_init(spawn).send(ShellMenuRequest::Properties { paths });
+}
 pub fn spawn() -> ShellMenuHandle {
     let requests = Arc::new(Mutex::new(VecDeque::new()));
     let events = Arc::new(Mutex::new(Vec::new()));

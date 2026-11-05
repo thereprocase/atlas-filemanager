@@ -120,7 +120,7 @@ pub async fn load_preview(tab: TabId, path: PathBuf, tx: flume::Sender<BgResult>
         tokio::task::spawn_blocking(move || model3d::preview_model(&p))
             .await
             .unwrap_or_else(|e| PreviewResult::Error(e.to_string()))
-    } else if matches!(ext.as_str(), "docx" | "csv" | "tsv" | "xls" | "xlsx" | "ods" | "pptx" | "psd" | "psb") {
+    } else if matches!(ext.as_str(), "docx" | "csv" | "tsv" | "xls" | "xlsm" | "xlsx" | "ods" | "pptx" | "psd" | "psb") {
         let p = path.clone();
         tokio::task::spawn_blocking(move || crate::ext::runner::native_document_preview(&p))
             .await

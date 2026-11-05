@@ -1424,6 +1424,7 @@ fn nav_context_menu(
 fn location_icon(location: &Location) -> AtlasIcon {
     match location {
         Location::Directory(_) => AtlasIcon::Folder,
+        Location::Shell(_) => AtlasIcon::Monitor,
         Location::Archive { .. } => AtlasIcon::File,
         Location::Tag(_) => AtlasIcon::Tag,
         Location::RecycleBin => AtlasIcon::Trash,
@@ -1436,6 +1437,7 @@ fn location_label(location: &Location) -> SharedString {
     let display = location.display_path();
     match location {
         Location::Directory(path) => path.display().to_string().into(),
+        Location::Shell(path) => atlas_core::util::display::display_name(std::path::Path::new(path)).into(),
         Location::Archive { archive, inner } => {
             if inner.as_os_str().is_empty() {
                 archive.display().to_string().into()

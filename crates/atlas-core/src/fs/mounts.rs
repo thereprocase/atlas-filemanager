@@ -92,6 +92,12 @@ fn list_drives_internal() -> Vec<DriveInfo> {
             }
         })
         .collect();
+    #[cfg(windows)]
+    for (root, _network) in atlas_win_space::storage::logical_drive_roots() {
+        if !drives.iter().any(|drive| drive.mount_point == root) {
+            drives.push(DriveInfo { label: root.to_string_lossy().into_owned(), mount_point: root, total_bytes: 0, available_bytes: 0, is_removable: false, is_system: false });
+        }
+    }
     drives.sort_by(|a, b| a.mount_point.cmp(&b.mount_point));
     drives.dedup_by(|a, b| a.mount_point == b.mount_point);
     drives

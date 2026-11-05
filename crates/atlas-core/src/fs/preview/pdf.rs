@@ -9,6 +9,19 @@ use atlas_model::preview_cache::PreviewResult;
 use super::MAX_PDF_PREVIEW_EDGE;
 
 pub fn preview_pdf_public(path: &Path) -> PreviewResult {
+    #[cfg(windows)]
+    {
+        if super::is_cloud_placeholder(path) { return super::offline_preview(); }
+        let directory = std::env::temp_dir().join(format!("atlas-native-pdf-{}", uuid::Uuid::new_v4()));
+        let rendered = atlas_win_space::pdf::render_first_page(path, &directory, 1600)
+            .and_then(|png| image::open(png).map_err(|e| e.to_string()));
+        let _ = std::fs::remove_dir_all(&directory);
+        if let Ok(img) = rendered {
+            let rgba = img.to_rgba8();
+            let (width, height) = rgba.dimensions();
+            return PreviewResult::Pdf { rgba: rgba.into_raw(), width: width as usize, height: height as usize };
+        }
+    }
     preview_pdf(path, Path::new("pdftoppm"))
 }
 

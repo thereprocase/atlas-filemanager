@@ -57,6 +57,7 @@ pub(crate) enum DragHoverDropCommand {
     /// Send the dropped paths to the OS trash (drop on the Recycle Bin).
     TrashPaths,
     RejectArchive,
+    RejectNamespace,
 }
 
 #[cfg(windows)]
@@ -513,7 +514,7 @@ impl App {
                 (bounds, command)
             }
         };
-        if self.drag_hover.reference_drag && !matches!(command, DragHoverDropCommand::InsertBookmarks(_)) {
+        if self.drag_hover.reference_drag && !matches!(command, DragHoverDropCommand::InsertBookmarks(_) | DragHoverDropCommand::AddBookmarks) {
             return None;
         }
         let mut paths = self.active_external_drag.as_ref().map(|drag| drag.paths.clone()).unwrap_or_default();
@@ -796,6 +797,7 @@ impl App {
                 // pane happens to hold focus.
                 self.delete_files(paths, true);
             }
+            DragHoverDropCommand::RejectNamespace => { self.toast_error("Choose a filesystem folder as the destination".into()); }
             DragHoverDropCommand::RejectArchive => {
                 self.toast_error(rust_i18n::t!("dnd_archive_drop_blocked").into_owned());
             }
@@ -1212,7 +1214,7 @@ fn drop_intent(command: &DragHoverDropCommand, paths: &[PathBuf], ctrl: bool, sh
         DragHoverDropCommand::AssignTag(_) => DropIntent::Tag,
         DragHoverDropCommand::AddBookmarks | DragHoverDropCommand::InsertBookmarks(_) => DropIntent::Bookmark,
         DragHoverDropCommand::StageInSidebar => DropIntent::Stage,
-        DragHoverDropCommand::RejectArchive => DropIntent::Blocked,
+        DragHoverDropCommand::RejectArchive | DragHoverDropCommand::RejectNamespace => DropIntent::Blocked,
     }
 }
 
@@ -1230,6 +1232,7 @@ pub(crate) fn location_drop_command(location: &Location) -> DragHoverDropCommand
         Location::Tag(tag) => DragHoverDropCommand::AssignTag(*tag),
         Location::RecycleBin => DragHoverDropCommand::TrashPaths,
         Location::Archive { .. } => DragHoverDropCommand::RejectArchive,
+        Location::Shell(_) => DragHoverDropCommand::RejectNamespace,
         #[cfg(feature = "provider-host")]
         Location::Remote { id, path } => DragHoverDropCommand::TransferTo(crate::app::cloud::remote_sentinel(id, path)),
     }

@@ -256,7 +256,7 @@ fn goto_item(path: PathBuf, tab: atlas_model::pane::TabId, pane: PaneId) -> Pale
         || path.to_string_lossy().into_owned(),
         |n| n.to_string_lossy().into_owned(),
     );
-    let is_dir_guess = path.extension().is_none();
+    let is_dir_guess = path.is_dir() || atlas_model::location::is_unc_host(&path.to_string_lossy());
     let icon = if is_dir_guess {
         AtlasIcon::Folder
     } else {
@@ -932,9 +932,9 @@ impl App {
                 .and_then(|h| expand_home_query(trimmed, &h))
                 .map(PathBuf::from)
                 .unwrap_or_else(|| PathBuf::from(trimmed));
-            let direct_exists = direct_path.exists();
+            let direct_exists = atlas_model::location::is_unc_host(&direct_path.to_string_lossy()) || direct_path.exists();
             if direct_exists && !entries.iter().any(|e| e.path == direct_path) {
-                let is_dir = direct_path.is_dir();
+                let is_dir = atlas_model::location::is_unc_host(&direct_path.to_string_lossy()) || direct_path.is_dir();
                 let direct_item = goto_item(direct_path.clone(), focused_tile, pane);
                 if is_dir {
                     folders.insert(0, direct_item);

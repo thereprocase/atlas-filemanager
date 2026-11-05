@@ -50,7 +50,7 @@ pub fn normalize_wsl_location_path(location: &mut atlas_model::location::Locatio
         atlas_model::location::Location::Archive { archive, .. } => {
             *archive = normalize_wsl_unc_path(std::mem::take(archive));
         }
-        atlas_model::location::Location::Tag(_) | atlas_model::location::Location::RecycleBin => {}
+        atlas_model::location::Location::Tag(_) | atlas_model::location::Location::Shell(_) | atlas_model::location::Location::RecycleBin => {}
         #[cfg(feature = "provider-host")]
         atlas_model::location::Location::Remote { .. } => {}
     }

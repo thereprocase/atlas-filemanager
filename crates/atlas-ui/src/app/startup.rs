@@ -258,6 +258,23 @@ impl App {
                 let _ = tag_db_tx.send(atlas_core::fs::tag_db::TagDbCmd::QueryPathsForTag(tag));
                 continue;
             }
+            if let atlas_model::location::Location::Shell(path) = location.clone() {
+                let op_id = state.next_op_id();
+                let ts = state.tab_states.entry(tile_id).or_default();
+                ts.load_state = LoadState::Loading;
+                ts.last_nav_op_id = op_id;
+                let tx = tx.clone();
+                rt.spawn(async move {
+                    let result = tokio::task::spawn_blocking(move || atlas_core::fs::shell_locations::list(&path)).await;
+                    let message = match result {
+                        Ok(Ok(entries)) => BgResult::DirListed { tab: tile_id, op_id, entries },
+                        Ok(Err(error)) => BgResult::DirListError { tab: tile_id, op_id, error: error.to_string() },
+                        Err(error) => BgResult::DirListError { tab: tile_id, op_id, error: error.to_string() },
+                    };
+                    let _ = tx.send(message);
+                });
+                continue;
+            }
             // A restored archive tab lists its inner directory on startup.
             if let atlas_model::location::Location::Archive { archive, inner } = location {
                 let op_id = state.next_op_id();

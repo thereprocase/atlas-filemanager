@@ -18,3 +18,5 @@ pub mod watcher;
 pub mod archive;
 pub mod preview;
 pub mod properties;
+
+pub mod shell_locations;

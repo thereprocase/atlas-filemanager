@@ -18,7 +18,7 @@ pub(crate) fn builtin_document_preview(
     match ext.as_str() {
         "csv" => delimited_preview(path, b','),
         "tsv" => delimited_preview(path, b'\t'),
-        "xls" | "xlsx" | "ods" => spreadsheet_preview(path),
+        "xls" | "xlsm" | "xlsx" | "ods" => spreadsheet_preview(path),
         "docx" => crate::fs::preview::document::preview_docx(path),
         "pptx" => pptx_preview(path),
         "pdf" => {
@@ -389,5 +389,31 @@ mod delimited_tests {
         let (rows, truncated) = delimited_records(&"x,".repeat(80), b',');
         assert!(truncated);
         assert_eq!(rows[0].len(), 50);
+    }
+}
+
+#[cfg(test)]
+mod macro_workbook_tests {
+    use super::*;
+    #[test]
+    fn xlsm_preview_reads_cells_and_ignores_macro_payload() {
+        use std::io::Write;
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("parts.xlsm");
+        let mut archive = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let files = [
+            ("[Content_Types].xml", r#"<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.ms-excel.sheet.macroEnabled.main+xml"/></Types>"#),
+            ("xl/workbook.xml", r#"<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Parts" sheetId="1" r:id="rId1"/></sheets></workbook>"#),
+            ("xl/_rels/workbook.xml.rels", r#"<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>"#),
+            ("xl/worksheets/sheet1.xml", r#"<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Part</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>Bracket</t></is></c></row></sheetData></worksheet>"#),
+            ("xl/vbaProject.bin", "inert audit fixture; this payload must not be parsed as workbook cells"),
+        ];
+        for (name, text) in files { archive.start_file(name, zip::write::SimpleFileOptions::default()).unwrap(); archive.write_all(text.as_bytes()).unwrap(); }
+        archive.finish().unwrap();
+        let result = builtin_document_preview(&path, &HashMap::new());
+        match result {
+            PreviewResult::Table { headers, rows, .. } => { assert_eq!(headers, ["Part"]); assert_eq!(rows, [vec!["Bracket".to_string()]]); }
+            other => panic!("expected workbook cells, got {other:?}"),
+        }
     }
 }

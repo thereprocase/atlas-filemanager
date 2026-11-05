@@ -10,7 +10,7 @@ homepage = "https://atlasnative.com"
 atlas-model = { path = "../atlas-model", default-features = false }
 windows = { version = "0.61", features = [
     "Win32_Foundation", "Win32_System_Com", "Win32_System_Ole",
-    "Win32_System_Variant", "Win32_UI_Shell", "Win32_UI_Shell_Common",
+    "Win32_System_Variant", "Win32_System_SystemServices", "Win32_UI_Shell", "Win32_UI_Shell_Common",
     "Win32_UI_Shell_PropertiesSystem",
     "Win32_Media_MediaFoundation",
     "Data_Pdf", "Storage", "Storage_Streams",

@@ -85,6 +85,13 @@ Shortcuts can be remapped in Settings.
 | `Ctrl+Alt+C` | Convert |
 | `Ctrl+,` | Settings |
 
+## Windows wishlist branch (fork)
+
+This branch adds Windows shell browsing for This PC, Network and UNC hosts, discovery of drive-letter mappings and registered Desktop provider roots, dragging navigation references into Bookmarks, native first-page PDF rendering, and XLSM cell previews. Properties commands run on a separate pumped STA shell worker. XLSM preview reads workbook data through Calamine and does not run VBA. Shell locations supply no filesystem destination for paste or drag-and-drop.
+
+Windows runtime checks on the owner's mapped drives and organization sync providers remain necessary. Namespace enumeration depends on registered Windows shell providers; it does not invent or configure cloud accounts. The Properties change removes a UI re-entry path; confirmation against the reported Desktop crash remains pending.
+
+
 ## Build from source
 
 Requirements: Windows 10/11, the MSVC build tools (Visual Studio Build Tools with the Windows SDK) and [Rust](https://rustup.rs/). The repository pins the toolchain in [`rust-toolchain.toml`](rust-toolchain.toml), so `cargo` picks the right version automatically.

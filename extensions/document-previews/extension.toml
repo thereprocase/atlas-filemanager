@@ -18,7 +18,7 @@ id = "table-preview"
 title = "CSV / spreadsheet preview"
 preview = true
 output = "table"
-accepts = { extensions = ["csv", "tsv", "xls", "xlsx", "ods"] }
+accepts = { extensions = ["csv", "tsv", "xls", "xlsm", "xlsx", "ods"] }
 
 [[commands]]
 id = "word-preview"

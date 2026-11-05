@@ -1669,6 +1669,13 @@ fn ctx_row_height(row: &CtxRow) -> f32 {
 #[allow(unsafe_code)]
 pub(crate) fn show_properties(path: &std::path::Path) {
     #[cfg(windows)]
+    crate::shell_menu::properties(vec![path.to_path_buf()]);
+    #[cfg(not(windows))]
+    let _ = path;
+}
+#[allow(unsafe_code)]
+pub(crate) fn show_properties_on_shell_thread(path: &std::path::Path) {
+    #[cfg(windows)]
     {
         use windows::core::PCWSTR;
         use windows::Win32::Foundation::HWND;
@@ -1704,32 +1711,7 @@ pub(crate) fn show_properties(path: &std::path::Path) {
 /// Open the shell Properties dialog for "This PC".
 #[allow(unsafe_code)]
 pub(crate) fn show_this_pc_properties() {
-    #[cfg(windows)]
-    {
-        use windows::core::PCWSTR;
-        use windows::Win32::Foundation::HWND;
-        use windows::Win32::UI::Shell::{
-            ShellExecuteExW, SEE_MASK_INVOKEIDLIST, SHELLEXECUTEINFOW,
-        };
-        use windows::Win32::UI::WindowsAndMessaging::SW_SHOW;
-
-        let verb: Vec<u16> = "properties\0".encode_utf16().collect();
-        let this_pc: Vec<u16> = "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\0"
-            .encode_utf16()
-            .collect();
-        let mut info = SHELLEXECUTEINFOW {
-            cbSize: std::mem::size_of::<SHELLEXECUTEINFOW>() as u32,
-            fMask: SEE_MASK_INVOKEIDLIST,
-            hwnd: HWND::default(),
-            lpVerb: PCWSTR(verb.as_ptr()),
-            lpFile: PCWSTR(this_pc.as_ptr()),
-            nShow: SW_SHOW.0,
-            ..Default::default()
-        };
-        unsafe {
-            let _ = ShellExecuteExW(&mut info);
-        }
-    }
+    show_properties(std::path::Path::new(atlas_core::fs::shell_locations::COMPUTER));
 }
 
 /// Open the combined native Properties dialog for several paths at once
@@ -1739,18 +1721,7 @@ pub(crate) fn show_this_pc_properties() {
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn show_properties_multi(paths: &[PathBuf]) {
-    use crate::dnd::windows::data_object::AtlasDataObject;
-    use std::sync::atomic::AtomicU32;
-    use windows::Win32::System::Ole::DROPEFFECT_COPY;
-    use windows::Win32::UI::Shell::SHMultiFileProperties;
-
-    let data_obj = AtlasDataObject::new(paths, DROPEFFECT_COPY, Arc::new(AtomicU32::new(0)));
-    let ok = data_obj.is_some_and(|obj| unsafe { SHMultiFileProperties(&obj, 0).is_ok() });
-    if !ok {
-        for path in paths {
-            show_properties(path);
-        }
-    }
+    crate::shell_menu::properties(paths.to_vec());
 }
 
 /// Rank `titles` against `query` (best first). Standalone so it doesn't need the
@@ -2029,6 +2000,23 @@ mod tests {
                     cmd.command_id()
                 );
             }
+        }
+    }
+}
+
+#[cfg(windows)]
+#[allow(unsafe_code)]
+pub(crate) fn show_properties_multi_on_shell_thread(paths: &[PathBuf]) {
+    use crate::dnd::windows::data_object::AtlasDataObject;
+    use std::sync::atomic::AtomicU32;
+    use windows::Win32::System::Ole::DROPEFFECT_COPY;
+    use windows::Win32::UI::Shell::SHMultiFileProperties;
+
+    let data_obj = AtlasDataObject::new(paths, DROPEFFECT_COPY, Arc::new(AtomicU32::new(0)));
+    let ok = data_obj.is_some_and(|obj| unsafe { SHMultiFileProperties(&obj, 0).is_ok() });
+    if !ok {
+        for path in paths {
+            show_properties_on_shell_thread(path);
         }
     }
 }

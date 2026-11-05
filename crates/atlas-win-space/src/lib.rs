@@ -7,6 +7,7 @@ pub mod directory;
 pub mod persistence;
 pub mod crash;
 pub mod storage;
+pub mod shell_locations;
 pub mod recycle;
 pub mod integration;
 pub mod metadata;

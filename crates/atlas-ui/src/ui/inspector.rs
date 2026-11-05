@@ -600,6 +600,16 @@ impl App {
         self.rt.spawn(async move {
             atlas_core::fs::preview::metadata::load(tab, metadata_path, metadata_tx).await;
         });
+        #[cfg(windows)]
+        if path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("pdf")) {
+            self.rt.spawn(async move {
+                let p = path.clone();
+                let result = tokio::task::spawn_blocking(move || atlas_core::fs::preview::preview_pdf_public(&p)).await
+                    .unwrap_or_else(|error| PreviewResult::Error(error.to_string()));
+                let _ = tx.send(atlas_model::app_state::BgResult::PreviewReady { tab, path, result });
+            });
+            return;
+        }
         let previewer = path
             .extension()
             .and_then(|e| e.to_str())

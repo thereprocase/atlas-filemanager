@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Location {
     Directory(PathBuf),
+    Shell(String),
     Archive {
         archive: PathBuf,
         inner: PathBuf,
@@ -31,6 +32,7 @@ impl Location {
     pub fn display_path(&self) -> PathBuf {
         match self {
             Self::Directory(p) => p.clone(),
+            Self::Shell(path) => PathBuf::from(path),
             Self::Archive { archive, inner } => {
                 if inner == Path::new("") {
                     archive.clone()
@@ -82,6 +84,10 @@ impl Location {
                         inner: parent_inner,
                     })
                 }
+            }
+            Self::Shell(path) => {
+                if is_unc_host(path) { Some(Self::Shell("::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}".into())) }
+                else { path.rsplit_once('\\').map(|(parent, _)| Self::Shell(parent.into())) }
             }
             Self::Tag(_) | Self::RecycleBin => None,
             #[cfg(feature = "provider-host")]
@@ -139,5 +145,29 @@ mod tests {
         );
 
         assert_eq!(root_parent.ascend(), None);
+    }
+}
+
+/// A UNC host is a shell container; shares and files are filesystem paths.
+pub fn is_unc_host(path: &str) -> bool {
+    path.strip_prefix(r"\\").is_some_and(|rest| {
+        let host = rest.trim_end_matches('\\');
+        !host.is_empty() && !host.contains('\\') && !matches!(host, "?" | ".")
+    })
+}
+#[cfg(test)]
+mod shell_navigation_tests {
+    use super::*;
+    #[test]
+    fn unc_hosts_are_separate_from_shares_files_and_device_paths() {
+        assert!(is_unc_host(r"\\nas"));
+        assert!(is_unc_host(r"\\192.168.1.20\"));
+        for path in [r"\\nas\work", r"\\nas\work\plan.xlsm", r"C:\work", r"\\?\C:\work", r"\\."] { assert!(!is_unc_host(path), "{path}"); }
+    }
+    #[test]
+    fn shell_containers_do_not_supply_filesystem_destinations() {
+        let location = Location::Shell("::{20D04FE0-3AEA-1069-A2D8-08002B30309D}".into());
+        assert!(location.fs_dir().is_none());
+        assert!(!location.is_directory());
     }
 }

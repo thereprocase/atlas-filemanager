@@ -127,6 +127,9 @@ impl App {
                 atlas_model::settings::ViewMode::Tree | atlas_model::settings::ViewMode::Miller) {
                 pane.view_mode = atlas_model::settings::ViewMode::Details;
             }
+            if matches!(loc, Location::Shell(_)) && matches!(pane.view_mode, atlas_model::settings::ViewMode::Tree | atlas_model::settings::ViewMode::Miller) {
+                pane.view_mode = atlas_model::settings::ViewMode::Details;
+            }
             let old = pane.location.clone();
             pane.breadcrumb_trail = match (old.fs_dir(), loc.fs_dir()) {
                 (Some(old), Some(new)) => {
@@ -271,7 +274,7 @@ impl App {
 
     /// Navigate to an explicit local destination, regardless of the source account.
     pub(crate) fn navigate(&mut self, tab_id: TileId, path: PathBuf) {
-        self.navigate_to(tab_id, Location::Directory(path), NavKind::Push);
+        self.navigate_to(tab_id, entry_destination(None, path), NavKind::Push);
     }
 
     /// Entry activation carries its source location. Remote names that resemble
@@ -386,6 +389,22 @@ impl App {
     ) {
         match loc {
             Location::Directory(path) => self.spawn_list_dir(tab_id, path, col, dir),
+            Location::Shell(path) => {
+                let op_id = self.state.next_op_id();
+                let ts = self.state.tab_states.entry(tab_id).or_default();
+                ts.load_state = atlas_model::tab::LoadState::Loading;
+                ts.last_nav_op_id = op_id;
+                let tx = self.tx.clone();
+                self.rt.spawn(async move {
+                    let result = tokio::task::spawn_blocking(move || atlas_core::fs::shell_locations::list(&path)).await;
+                    let message = match result {
+                        Ok(Ok(entries)) => atlas_model::app_state::BgResult::DirListed { tab: tab_id, op_id, entries },
+                        Ok(Err(error)) => atlas_model::app_state::BgResult::DirListError { tab: tab_id, op_id, error: error.to_string() },
+                        Err(error) => atlas_model::app_state::BgResult::DirListError { tab: tab_id, op_id, error: error.to_string() },
+                    };
+                    let _ = tx.send(message);
+                });
+            }
             Location::Archive { archive, inner } => {
                 self.spawn_list_archive(tab_id, archive, inner, col, dir);
             }
@@ -417,6 +436,7 @@ fn entry_destination(current: Option<&Location>, path: PathBuf) -> Location {
     if let Some(Location::Archive { archive, .. }) = current {
         return Location::Archive { archive: archive.clone(), inner: path };
     }
+    if path.to_string_lossy().starts_with("::") || atlas_model::location::is_unc_host(&path.to_string_lossy()) { return Location::Shell(path.to_string_lossy().into_owned()); }
     Location::Directory(path)
 }
 

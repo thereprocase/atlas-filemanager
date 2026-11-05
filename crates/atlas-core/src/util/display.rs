@@ -107,6 +107,11 @@ pub fn is_hidden(path: &Path) -> bool {
 
 /// Extract a human-readable display name from a path.
 pub fn display_name(path: &Path) -> String {
+    match path.to_string_lossy().as_ref() {
+        crate::fs::shell_locations::COMPUTER => return "This PC".into(),
+        crate::fs::shell_locations::NETWORK => return "Network".into(),
+        _ => {}
+    }
     if let Some(name) = crate::vault::live::display_name(path) { return name; }
     path.file_name().map_or_else(
         || {
