@@ -1,5 +1,7 @@
 //! Shell folders have no writable filesystem destination.
-use atlas_model::file_entry::{FileEntry, FileEntryData, FileKind};
+use atlas_model::file_entry::FileEntry;
+#[cfg(windows)]
+use atlas_model::file_entry::{FileEntryData, FileKind};
 pub const COMPUTER: &str = "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}";
 pub const NETWORK: &str = "::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}";
 pub fn list(path: &str) -> anyhow::Result<Vec<FileEntry>> {
