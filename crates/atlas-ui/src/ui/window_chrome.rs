@@ -254,7 +254,7 @@ fn control(action: Control, maximized: bool, foreground: Hsla, hover: Hsla) -> i
         .flex()
         .items_center()
         .justify_center()
-        .rounded(crate::ui::rem_px(8.0))
+        .rounded(crate::ui::gridline::radius(8.0))
         .block_mouse_except_scroll()
         .bg(hover.opacity(0.0))
         .text_color(foreground.opacity(0.72))

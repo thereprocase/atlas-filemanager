@@ -1385,8 +1385,8 @@
         "sidebar.accent.background": "#E8E8F8",
         "sidebar.accent.foreground": "#FFFFFF",
         "tab.background": "#00000000",
-        "tab.active.background": "#FFFFFF",
-        "tab.active.foreground": "#101010",
+        "tab.active.background": "#0000A8",
+        "tab.active.foreground": "#FFFFFF",
         "tab.foreground": "#101010",
         "tab_bar.background": "#C6C6C6",
         "tab_bar.segmented.background": "#E8E8E8",
@@ -1400,8 +1400,7 @@
         "link.hover": "#000078",
         "drop_target.background": "#0000A833",
         "drag.border": "#0000A8",
-        "table.head.background": "#F2F2F2",
-        "title_bar.foreground": "#FFFFFF"
+        "table.head.background": "#F2F2F2"
       }
     },
     {
@@ -1463,7 +1462,7 @@
         "sidebar.accent.background": "#24244A",
         "sidebar.accent.foreground": "#FFFFFF",
         "tab.background": "#00000000",
-        "tab.active.background": "#242424",
+        "tab.active.background": "#0000A8",
         "tab.active.foreground": "#FFFFFF",
         "tab.foreground": "#FFFFFF",
         "tab_bar.background": "#181818",
@@ -1478,8 +1477,7 @@
         "link.hover": "#829AFF",
         "drop_target.background": "#A6B8FF33",
         "drag.border": "#A6B8FF",
-        "table.head.background": "#383838",
-        "title_bar.foreground": "#FFFFFF"
+        "table.head.background": "#383838"
       }
     }
   ]

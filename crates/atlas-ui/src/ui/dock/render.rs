@@ -1540,12 +1540,12 @@ impl App {
         let muted = cx.theme().muted_foreground;
         let active_theme = self.state.profiles.active().theme.as_str();
         let is_glass = active_theme.ends_with(" Glass");
-        let tab_bar_bg = if is_glass {
+        let tab_bar_bg = if is_glass || crate::ui::gridline::active() {
             cx.theme().tab_bar
         } else {
             backdrop_tint(cx.theme().tab_bar, 0.16)
         };
-        let active_bg = if is_glass {
+        let active_bg = if is_glass || crate::ui::gridline::active() {
             cx.theme().tab_active
         } else {
             backdrop_tint(cx.theme().tab_active, 0.22)
