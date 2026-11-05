@@ -285,6 +285,7 @@ pub fn build_extended_index(injector: nucleo::Injector<IndexEntry>) {
     rayon::spawn(move || {
         let roots: Vec<PathBuf> = super::mounts::list_drives()
             .into_iter()
+            .filter(|drive| !drive.is_network)
             .map(|drive| drive.mount_point)
             .chain(super::paths::list_wsl_roots())
             .collect();

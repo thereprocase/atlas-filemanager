@@ -20,6 +20,7 @@ pub struct DriveInfo {
     pub available_bytes: u64,
     pub is_removable: bool,
     pub is_system: bool,
+    pub is_network: bool,
 }
 
 impl DriveInfo {
@@ -89,13 +90,14 @@ fn list_drives_internal() -> Vec<DriveInfo> {
                 available_bytes: disk.available_space(),
                 is_removable,
                 is_system,
+                is_network: false,
             }
         })
         .collect();
     #[cfg(windows)]
-    for (root, _network) in atlas_win_space::storage::logical_drive_roots() {
+    for (root, network) in atlas_win_space::storage::logical_drive_roots() {
         if !drives.iter().any(|drive| drive.mount_point == root) {
-            drives.push(DriveInfo { label: root.to_string_lossy().into_owned(), mount_point: root, total_bytes: 0, available_bytes: 0, is_removable: false, is_system: false });
+            drives.push(DriveInfo { label: root.to_string_lossy().into_owned(), mount_point: root, total_bytes: 0, available_bytes: 0, is_removable: false, is_system: false, is_network: network });
         }
     }
     drives.sort_by(|a, b| a.mount_point.cmp(&b.mount_point));
