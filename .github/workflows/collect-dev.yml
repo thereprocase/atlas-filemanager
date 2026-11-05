@@ -1,0 +1,38 @@
+name: Collect wishlist and Gridline into dev
+on:
+  push:
+    branches: [feature/wishlist, theme/gridline]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: atlas-collect-dev
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge current feature tips and dispatch the exact dev commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'repro'
+          git config user.email 'repro@local'
+          git fetch origin main feature/wishlist theme/gridline
+          if git ls-remote --exit-code --heads origin dev >/dev/null; then
+            git fetch origin dev
+            git checkout -B dev origin/dev
+          else
+            git checkout -b dev origin/main
+          fi
+          git merge --no-edit origin/main
+          git merge --no-edit origin/feature/wishlist
+          git merge --no-edit origin/theme/gridline
+          git push origin dev
+          gh workflow run windows-dev.yml --ref dev
+          echo "Collected dev commit: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,44 @@
+name: Windows dev build
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 100
+    env:
+      ATLAS_RELEASE_VERSION: 0.1.0-full-demo
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        shell: pwsh
+        run: rustup show
+      - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a
+        with:
+          cache-on-failure: true
+      - name: Verify edition behavior
+        run: cargo test --locked -p atlas-model edition::tests
+      - name: Build Full application and helpers
+        run: cargo build --release --locked -p atlas -p atlas-search-service -p atlas-cloud-extension -p atlas-icon-extension
+      - name: Package and verify
+        shell: pwsh
+        run: ./scripts/build-full-demo.ps1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Atlas-Dev-Windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
