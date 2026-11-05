@@ -17,7 +17,8 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 100
     env:
-      ATLAS_RELEASE_VERSION: 0.1.0-full-demo
+      ATLAS_RELEASE_VERSION: 0.1.0-dev
+      ROBO_COMMIT: 4ce1c1eb1ae239233ff41a15ec445257c0fb63e2
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -29,13 +30,39 @@ jobs:
       - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a
         with:
           cache-on-failure: true
-      - name: Verify edition behavior
-        run: cargo test --locked -p atlas-model edition::tests
+      - name: Verify edition and navigation behavior
+        run: cargo test --locked -p atlas-model
+      - name: Verify XLSM preview
+        run: cargo test --locked -p atlas-core --lib xlsm_preview_reads_cells
+      - name: Verify Windows namespace discovery
+        run: cargo test --locked -p atlas-win-space this_pc_enumerates
+      - name: Verify native PDF preview
+        run: cargo test --locked -p atlas-win-space preview_renders_only_the_first_page
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: thereprocase/robo-rightclick
+          ref: 4ce1c1eb1ae239233ff41a15ec445257c0fb63e2
+          path: companion-src
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.111'
+      - name: Verify and build RoboRightClick
+        working-directory: companion-src
+        shell: pwsh
+        run: |
+          dotnet test tests/RoboRightClick.Core.Tests -c Release -p:RestoreLockedMode=true
+          if ($LASTEXITCODE -ne 0) { throw 'RoboRightClick tests failed.' }
+          dotnet publish src/RoboRightClick/RoboRightClick.csproj -c Release --self-contained true -p:PublishSingleFile=true -p:EnableSingleFileAnalyzer=false -p:DebugType=none -p:ContinuousIntegrationBuild=true -o artifacts/publish
+          if ($LASTEXITCODE -ne 0) { throw 'RoboRightClick build failed.' }
       - name: Build Full application and helpers
-        run: cargo build --release --locked -p atlas -p atlas-search-service -p atlas-cloud-extension -p atlas-icon-extension
+        run: cargo build --profile release-perf --locked -p atlas -p atlas-search-service -p atlas-cloud-extension -p atlas-icon-extension
       - name: Package and verify
         shell: pwsh
-        run: ./scripts/build-full-demo.ps1
+        run: |
+          New-Item -ItemType Directory -Force target/release | Out-Null
+          Copy-Item target/release-perf/*.exe target/release
+          ./scripts/build-full-demo.ps1 -Version '0.1.0-dev' -ArchiveName 'Atlas-Dev-Windows-x64.zip' -RoboDirectory 'companion-src'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: Atlas-Dev-Windows-x64
