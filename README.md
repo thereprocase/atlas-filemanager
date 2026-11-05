@@ -131,3 +131,11 @@ Bug reports, ideas and pull requests are welcome. Please read [CONTRIBUTING.md](
 Atlas is licensed under the [GNU AGPL v3.0 or later](LICENSE). Third-party components keep their own licenses; see [NOTICE](NOTICE) and [`legal/THIRD-PARTY-NOTICES.txt`](legal/THIRD-PARTY-NOTICES.txt).
 
 The Atlas name and logo are not covered by the AGPL license.
+
+## Gridline themes (fork)
+
+Select **Gridline Light** or **Gridline Dark** in the theme picker. Both bundle IBM Plex Sans and Mono, use square main controls and menus, opaque surfaces, visible rules, and a base scale of 18 px rather than 16 px. The user's zoom setting still applies. Other presets retain their existing scale and fonts.
+
+Light follows the Gridline system-gray palette. Dark follows the Bambu Bridge Gridline dark palette, retaining blue title strips and distinct semantic colors. Some specialized Atlas widgets still draw their own decoration.
+
+References: [Gridline](https://github.com/thereprocase/gridline/tree/3c20e3b9361ad2b975aee41a3cc1ff20b55be86d), [RoboRightClick](https://github.com/thereprocase/robo-rightclick/tree/4ce1c1eb1ae239233ff41a15ec445257c0fb63e2), and Bambu Bridge's mobile theme tokens. IBM Plex fonts retain their bundled SIL OFL license.

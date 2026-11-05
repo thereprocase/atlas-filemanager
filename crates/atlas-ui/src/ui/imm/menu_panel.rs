@@ -219,8 +219,8 @@ impl Element for MenuPanel {
     ) {
         let zoom = ink.zoom;
         let colors = self.colors;
-        let corners = Corners::all(px(colors.radius));
-        window.paint_drop_shadows(
+        let corners = Corners::all(crate::ui::gridline::radius(colors.radius));
+        if !crate::ui::gridline::active() { window.paint_drop_shadows(
             bounds,
             corners,
             &[
@@ -228,6 +228,7 @@ impl Element for MenuPanel {
                     .blur_radius(px(24.0 * zoom)),
             ],
         );
+        }
         if colors.background.alpha < 1.0 {
             window.paint_backdrop_filter(bounds, corners, &[gpui::Filter::Blur(px(16.0))]);
         }

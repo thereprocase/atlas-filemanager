@@ -44,7 +44,7 @@ pub(crate) struct DraggedCloudFiles {
 
 impl Render for DraggedCloudFiles {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div().px_2().py_1().rounded_md().bg(cx.theme().accent)
+        div().px_2().py_1().rounded(crate::ui::gridline::radius(6.0)).bg(cx.theme().accent)
             .text_color(cx.theme().accent_foreground)
             .child(format!("{} · {}", self.account_label, rust_i18n::t!("root_elements", count = self.paths.len())))
     }
@@ -56,7 +56,7 @@ impl Render for DraggedFiles {
         div()
             .px_2()
             .py_1()
-            .rounded_md()
+            .rounded(crate::ui::gridline::radius(6.0))
             .bg(cx.theme().accent)
             .text_color(cx.theme().accent_foreground)
             .child(SharedString::from(rust_i18n::t!(
@@ -647,7 +647,7 @@ impl Render for App {
                                     .top_0()
                                     .w(px(2.0))
                                     .h_full()
-                                    .rounded(px(1.0))
+                                    .rounded(crate::ui::gridline::radius(1.0))
                                     .bg(if resizing { accent } else { gpui::transparent_black() })
                                     .group_hover("inspector-resize", |s| s.bg(accent.opacity(0.7))),
                             )
@@ -723,7 +723,7 @@ impl Render for App {
             .relative()
             .text_color(fg)
             .text_sm()
-            .font_family(self.state.settings.font_family.clone())
+            .font_family(if crate::ui::gridline::active() { "IBM Plex Sans".to_string() } else { self.state.settings.font_family.clone() })
             .key_context(key_ctx)
             .track_focus(&self.focus_handle)
             .on_modifiers_changed({
