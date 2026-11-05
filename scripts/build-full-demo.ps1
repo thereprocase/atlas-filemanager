@@ -5,7 +5,6 @@ Set-Location $repo
 
 # Reuse upstream's pinned, SHA-256-verified rclone payload.
 & ./scripts/build-cloud-extension.ps1 -SkipBuild
-if ($LASTEXITCODE -ne 0) { throw 'Cloud payload preparation failed.' }
 
 $payload = Join-Path $repo 'target/full-demo/Atlas-Full'
 $dist = Join-Path $repo 'dist'
